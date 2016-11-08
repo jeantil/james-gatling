@@ -1,10 +1,8 @@
 package org.apache.james.gatling.imap
 
-import scala.collection.immutable.Seq
-
-import com.sun.mail.imap.protocol.IMAPResponse
 import io.gatling.core.check.Check
+import org.apache.james.gatling.imap.protocol.ImapResponses
 
 package object check {
-  type ImapCheck = Check[Seq[IMAPResponse]]
+  type ImapCheck = Check[ImapResponses]
 }

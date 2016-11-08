@@ -13,7 +13,7 @@ import io.gatling.core.session._
 import io.gatling.core.stats.StatsEngine
 import io.gatling.core.stats.message.ResponseTimings
 import org.apache.james.gatling.imap.check.ImapCheck
-import org.apache.james.gatling.imap.protocol.{Command, ImapProtocol, Response}
+import org.apache.james.gatling.imap.protocol.{Command, ImapProtocol, ImapResponses, Response}
 
 object SelectAction {
   def props(protocol: ImapProtocol, sessions: ActorRef, requestname: String, statsEngine: StatsEngine, next: Action, checks: Seq[ImapCheck], mailbox:Expression[String]) =
@@ -25,7 +25,7 @@ class SelectAction(protocol: ImapProtocol, sessions: ActorRef, requestName: Stri
   def handleSelected(session: Session, start: Long) =
     context.actorOf(Props( new Actor {
     override def receive: Receive = {
-      case Response.Selected(response: Seq[IMAPResponse]) =>
+      case Response.Selected(response: ImapResponses) =>
         logger.trace("SelectAction#Selected on SelectHandler.Selected")
         val (checkSaveUpdate, error) = Check.check(response,session, checks.toList)
         error.fold(ok(session, start,checkSaveUpdate))(ko(session, start))

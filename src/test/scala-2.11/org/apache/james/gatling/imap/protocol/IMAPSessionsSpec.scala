@@ -22,10 +22,10 @@ class IMAPSessionsSpec extends WordSpec with Matchers with BeforeAndAfterAll{
       val sessions = system.actorOf(IMAPSessions.props(protocol))
       val probe = TestProbe()
       probe.send(sessions, Command.Connect("1"))
-      probe.expectMsg(10.second,Response.Connected(Seq.empty[IMAPResponse]))
+      probe.expectMsg(10.second,Response.Connected(ImapResponses.empty))
       probe.send(sessions, Command.Login("1", "user1", "password"))
       probe.expectMsgPF(10.second) {
-        case s: Seq[IMAPResponse] => s.exists(_.isOK) shouldBe true
+        case s: ImapResponses => s.isOk shouldBe true
       }
     }
   }

@@ -53,7 +53,7 @@ private class IMAPSession(client: IMAPClient, protocol: ImapProtocol) extends Ba
   val connectionListener = new IMAPConnectionListener {
     override def onConnect(session: ClientSession): Unit = {
       logger.trace("Callback onConnect called")
-      self ! Response.Connected(Seq.empty[IMAPResponse])
+      self ! Response.Connected(ImapResponses.empty)
     }
 
     override def onMessage(session: ClientSession, response: IMAPResponse): Unit =

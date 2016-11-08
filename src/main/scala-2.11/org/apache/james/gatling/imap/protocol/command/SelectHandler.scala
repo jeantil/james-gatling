@@ -9,7 +9,7 @@ import com.lafaspot.imapnio.client.IMAPSession
 import com.lafaspot.imapnio.listener.IMAPCommandListener
 import com.sun.mail.imap.protocol.IMAPResponse
 import io.gatling.core.akka.BaseActor
-import org.apache.james.gatling.imap.protocol.{Command, Response}
+import org.apache.james.gatling.imap.protocol.{Command, ImapResponses, Response}
 
 object SelectHandler{
   def props(session:IMAPSession,tag:String)=Props(new SelectHandler(session, tag))
@@ -38,7 +38,7 @@ class SelectHandler(session:IMAPSession,tag:String) extends BaseActor {
     }
 
     override def onResponse(session: IMAPSession, tag: String, responses: util.List[IMAPResponse]): Unit = {
-      val response: Seq[IMAPResponse] = responses.asScala.to[Seq]
+      val response = ImapResponses(responses.asScala.to[Seq])
       logger.trace(s"On response for $userId :\n ${response.mkString("\n")}\n ${sender.path}")
       self ! Response.Selected(response)
     }

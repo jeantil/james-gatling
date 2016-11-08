@@ -25,11 +25,11 @@ package object protocol {
 
   object Response {
 
-    case class Connected(responses: Seq[IMAPResponse])
+    case class Connected(responses: ImapResponses)
 
-    case class LoggedIn(response: Seq[IMAPResponse])
+    case class LoggedIn(response: ImapResponses)
 
-    case class Selected(response: Seq[IMAPResponse])
+    case class Selected(response: ImapResponses)
 
     case class Disconnected(cause: Throwable)
 
