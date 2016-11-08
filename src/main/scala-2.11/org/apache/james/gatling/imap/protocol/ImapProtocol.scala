@@ -18,7 +18,7 @@ object ImapProtocol{
     override def defaultValue(configuration: GatlingConfiguration): ImapProtocol = throw new IllegalStateException("Can't provide a default value for ImapProtocol")
 
     override def newComponents(system: ActorSystem, coreComponents: CoreComponents): ImapProtocol=>ImapComponents = {protocol=>
-      val sessions: ActorRef = system.actorOf(IMAPSessions.props(protocol), "imapsessions")
+      val sessions: ActorRef = system.actorOf(ImapSessions.props(protocol), "imapsessions")
       ImapComponents(protocol, sessions)
     }
   }

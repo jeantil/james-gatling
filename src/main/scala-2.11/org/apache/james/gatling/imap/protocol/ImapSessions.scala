@@ -2,9 +2,7 @@ package org.apache.james.gatling.imap.protocol
 
 import java.net.URI
 import java.util
-import javax.xml.ws.ResponseWrapper
 
-import scala.collection.immutable.Seq
 import scala.util.control.NoStackTrace
 
 import akka.actor.{ActorRef, Props, Stash}
@@ -16,11 +14,11 @@ import com.sun.mail.imap.protocol.IMAPResponse
 import io.gatling.core.akka.BaseActor
 import org.apache.james.gatling.imap.protocol.command.{LoginHandler, SelectHandler}
 
-object IMAPSessions {
-  def props(protocol: ImapProtocol): Props = Props(new IMAPSessions(protocol))
+object ImapSessions {
+  def props(protocol: ImapProtocol): Props = Props(new ImapSessions(protocol))
 }
 
-class IMAPSessions(protocol: ImapProtocol) extends BaseActor {
+class ImapSessions(protocol: ImapProtocol) extends BaseActor {
   val imapClient = new IMAPClient(4)
 
   override def receive: Receive = {
@@ -29,11 +27,11 @@ class IMAPSessions(protocol: ImapProtocol) extends BaseActor {
   }
 
   private def sessionFor(userId: String) = {
-    context.child(userId).getOrElse(createIMAPSession(userId))
+    context.child(userId).getOrElse(createImapSession(userId))
   }
 
-  protected def createIMAPSession(userId: String) = {
-    context.actorOf(IMAPSession.props(imapClient, protocol), userId)
+  protected def createImapSession(userId: String) = {
+    context.actorOf(ImapSession.props(imapClient, protocol), userId)
   }
 
   @scala.throws[Exception](classOf[Exception])
@@ -43,13 +41,13 @@ class IMAPSessions(protocol: ImapProtocol) extends BaseActor {
   }
 }
 
-private object IMAPSession {
+private object ImapSession {
   def props(client: IMAPClient, protocol: ImapProtocol): Props =
-    Props(new IMAPSession(client, protocol))
+    Props(new ImapSession(client, protocol))
 
 }
 
-private class IMAPSession(client: IMAPClient, protocol: ImapProtocol) extends BaseActor with Stash {
+private class ImapSession(client: IMAPClient, protocol: ImapProtocol) extends BaseActor with Stash {
   val connectionListener = new IMAPConnectionListener {
     override def onConnect(session: ClientSession): Unit = {
       logger.trace("Callback onConnect called")
