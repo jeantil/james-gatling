@@ -42,22 +42,21 @@ abstract class ImapCommandActionBuilder extends ActionBuilder with NameGen {
 }
 
 case class ImapLoginActionBuilder(requestName: String, username: Expression[String], password: Expression[String], private val checks: Seq[ImapCheck]) extends ImapCommandActionBuilder {
-  def check(checks: ImapCheck*) = copy(checks = this.checks ++ checks)
+  def check(checks: ImapCheck*): ImapLoginActionBuilder = copy(checks = this.checks ++ checks)
 
-  override def props(ctx: ImapActionContext) =
+  override def props(ctx: ImapActionContext): Props =
     LoginAction.props(ctx, requestName, checks, username, password)
 
-
-  override val actionName = "login-action"
+  override val actionName: String = "login-action"
 }
 
 case class ImapSelectActionBuilder(requestName: String, mailbox: Expression[String], private val checks: Seq[ImapCheck]) extends ImapCommandActionBuilder {
-  def check(checks: ImapCheck*) = copy(checks = this.checks ++ checks)
+  def check(checks: ImapCheck*): ImapSelectActionBuilder = copy(checks = this.checks ++ checks)
 
   override def props(ctx: ImapActionContext): Props =
     SelectAction.props(ctx, requestName, checks, mailbox)
 
-  override val actionName = "select-action"
+  override val actionName: String = "select-action"
 }
 
 case class ImapConnectActionBuilder(requestName: String) extends ImapCommandActionBuilder {

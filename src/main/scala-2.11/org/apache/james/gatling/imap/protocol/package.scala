@@ -1,15 +1,10 @@
 package org.apache.james.gatling.imap
 
-import scala.collection.immutable.Seq
-
-import com.sun.mail.imap.protocol.IMAPResponse
-
 package object protocol {
 
   trait Command {
     def userId: String
   }
-
 
   object Command {
 
@@ -23,13 +18,18 @@ package object protocol {
 
   }
 
+  sealed trait Response{
+    def responses:ImapResponses
+  }
+
   object Response {
+    def unapply(arg: Response): Option[ImapResponses] = Some(arg.responses)
 
-    case class Connected(responses: ImapResponses)
+    case class Connected(responses: ImapResponses) extends Response
 
-    case class LoggedIn(response: ImapResponses)
+    case class LoggedIn(responses: ImapResponses) extends Response
 
-    case class Selected(response: ImapResponses)
+    case class Selected(responses: ImapResponses) extends Response
 
     case class Disconnected(cause: Throwable)
 

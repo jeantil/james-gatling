@@ -7,6 +7,7 @@ import io.gatling.core.CoreComponents
 import io.gatling.core.config.GatlingConfiguration
 import io.gatling.core.protocol.{Protocol, ProtocolComponents, ProtocolKey}
 import io.gatling.core.session.Session
+import org.apache.james.gatling.imap.protocol.Command.Disconnect
 
 object ImapProtocol{
   val ImapProtocolKey = new ProtocolKey{
@@ -26,7 +27,7 @@ object ImapProtocol{
 case class ImapComponents(protocol:ImapProtocol, sessions:ActorRef) extends ProtocolComponents{
   override def onStart: Option[(Session) => Session] = None
 
-  override def onExit: Option[(Session) => Unit] = None //Some(session=> sessions ! Disconnect(session.userId.toString))
+  override def onExit: Option[(Session) => Unit] = Some(session=> sessions ! Disconnect(session.userId.toString))
 }
 
 case class ImapProtocol(host: String,
