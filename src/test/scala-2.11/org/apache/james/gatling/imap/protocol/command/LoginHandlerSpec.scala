@@ -5,6 +5,7 @@ import java.util
 import java.util.Properties
 
 import scala.concurrent.duration._
+
 import akka.actor.ActorSystem
 import akka.testkit.TestProbe
 import com.lafaspot.imapnio.client.{IMAPClient, IMAPSession}
@@ -12,7 +13,7 @@ import com.lafaspot.imapnio.listener.IMAPConnectionListener
 import com.lafaspot.logfast.logging.internal.LogPage
 import com.lafaspot.logfast.logging.{LogManager, Logger}
 import com.sun.mail.imap.protocol.IMAPResponse
-import org.apache.james.gatling.imap.protocol.ImapCommand.Login
+import org.apache.james.gatling.imap.protocol.{Command, Response}
 import org.scalatest.matchers.{MatchResult, Matcher}
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpec}
 import org.slf4j.LoggerFactory
@@ -27,10 +28,10 @@ class LoginHandlerSpec extends WordSpec with BeforeAndAfterAll with Matchers {
       val probe = TestProbe()
       withConnectedSession { session =>
         val handler = system.actorOf(LoginHandler.props(session, tag))
-        probe.send(handler, Login("userId1", "user1", "password"))
+        probe.send(handler, Command.Login("userId1", "user1", "password"))
       }
       probe.expectMsgPF(1.minute) {
-        case LoginHandler.LoggedIn(responses) => responses.exists(_.isOK) shouldBe true
+        case Response.LoggedIn(responses) => responses.exists(_.isOK) shouldBe true
       }
     }
   }

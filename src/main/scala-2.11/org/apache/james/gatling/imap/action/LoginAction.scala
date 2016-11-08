@@ -1,4 +1,4 @@
-package org.apache.james.gatling.imap.protocol.action
+package org.apache.james.gatling.imap.action
 
 import akka.actor.{Actor, ActorRef, Props}
 import com.sun.mail.imap.protocol.IMAPResponse
@@ -9,22 +9,21 @@ import io.gatling.core.action.{Action, ValidatedActionActor}
 import io.gatling.core.session._
 import io.gatling.core.stats.StatsEngine
 import io.gatling.core.stats.message.ResponseTimings
-import org.apache.james.gatling.imap.protocol.ImapCommand.Select
-import org.apache.james.gatling.imap.protocol.ImapProtocol
-import org.apache.james.gatling.imap.protocol.command.SelectHandler
+import org.apache.james.gatling.imap.protocol.{Command, ImapProtocol, Response}
+import org.apache.james.gatling.imap.protocol.command.LoginHandler
 
-object SelectAction {
-  def props(protocol: ImapProtocol, sessions: ActorRef, requestname: String, statsEngine: StatsEngine, next: Action, mailbox:Expression[String]) =
-    Props(new SelectAction(protocol, sessions, requestname,statsEngine, next, mailbox))
+object LoginAction {
+  def props(protocol: ImapProtocol, sessions: ActorRef, requestname: String, statsEngine: StatsEngine, next: Action, username:Expression[String], password:Expression[String]) =
+    Props(new LoginAction(protocol, sessions, requestname,statsEngine, next,username, password))
 }
 
-class SelectAction(protocol: ImapProtocol, sessions: ActorRef, requestName: String, val statsEngine: StatsEngine, val next: Action, mailbox:Expression[String]) extends ValidatedActionActor {
+class LoginAction(protocol: ImapProtocol, sessions: ActorRef, requestName: String, val statsEngine: StatsEngine, val next: Action, username:Expression[String], password:Expression[String]) extends ValidatedActionActor {
 
-  def handleSelected(session: Session, start: Long) =
+  def handleLoggedIn(session: Session, start: Long) =
     context.actorOf(Props( new Actor {
     override def receive: Receive = {
-      case SelectHandler.Selected(response: Seq[IMAPResponse]) =>
-        logger.trace("SelectAction#Selected on SelectHandler.Selected")
+      case Response.LoggedIn(response: Seq[IMAPResponse]) =>
+        logger.trace("LoginAction#handleLoggedIn on LoginHandler.LoggedIn")
         response.find(_.isOK).fold(noOkResponse(session, start))(onOkResponse(session, start))
       case e: Exception =>
         noOkResponse(session, start, Some(e.getMessage))
@@ -48,11 +47,12 @@ class SelectAction(protocol: ImapProtocol, sessions: ActorRef, requestName: Stri
 
   override protected def executeOrFail(session: Session): Validation[_] = {
       for{
-        mailbox<-mailbox(session)
+        user<-username(session)
+        pass<-password(session)
       } yield {
         val id: Long = session.userId
-        val handler =handleSelected(session, nowMillis)
-        sessions.tell(Select(id.toString, mailbox),handler)
+        val handler =handleLoggedIn(session, nowMillis)
+        sessions.tell(Command.Login(id.toString, user, pass),handler)
       }
   }
 }

@@ -1,11 +1,11 @@
 package org.apache.james.gatling.imap
 
-import io.gatling.core.action.{Action, ExitableActorDelegatingAction}
 import io.gatling.core.action.builder.ActionBuilder
+import io.gatling.core.action.{Action, ExitableActorDelegatingAction}
 import io.gatling.core.session.Expression
 import io.gatling.core.structure.ScenarioContext
 import io.gatling.core.util.NameGen
-import org.apache.james.gatling.imap.protocol.action.{ConnectAction, LoginAction, SelectAction}
+import org.apache.james.gatling.imap.action.{ConnectAction, LoginAction, SelectAction}
 import org.apache.james.gatling.imap.protocol.{ImapComponents, ImapProtocol}
 
 class ImapActionBuilder(requestName: String) {

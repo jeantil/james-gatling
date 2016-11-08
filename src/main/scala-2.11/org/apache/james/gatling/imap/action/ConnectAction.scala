@@ -1,7 +1,6 @@
-package org.apache.james.gatling.imap.protocol.action
+package org.apache.james.gatling.imap.action
 
 import akka.actor.{Actor, ActorRef, Props}
-import com.sun.mail.imap.protocol.IMAPResponse
 import io.gatling.commons.stats.{KO, OK}
 import io.gatling.commons.util.TimeHelper._
 import io.gatling.core.action.{Action, ActionActor}

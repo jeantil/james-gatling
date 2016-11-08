@@ -3,6 +3,9 @@ package org.apache.james.gatling.imap.protocol
 import java.net.URI
 import java.util
 
+import scala.collection.immutable.Seq
+import scala.util.control.NoStackTrace
+
 import akka.actor.{ActorRef, Props, Stash}
 import com.lafaspot.imapnio.client.{IMAPClient, IMAPSession => ClientSession}
 import com.lafaspot.imapnio.listener.IMAPConnectionListener
@@ -11,11 +14,7 @@ import com.lafaspot.logfast.logging.{LogManager, Logger}
 import com.sun.mail.imap.protocol.IMAPResponse
 import io.gatling.core.akka.BaseActor
 import org.apache.james.gatling.imap.protocol.IMAPSessions.{Disconnect, Disconnected}
-import org.apache.james.gatling.imap.protocol.ImapCommand.{Login, Select}
 import org.apache.james.gatling.imap.protocol.command.{LoginHandler, SelectHandler}
-
-import scala.collection.immutable.Seq
-import scala.util.control.NoStackTrace
 
 object IMAPSessions {
   def props(protocol: ImapProtocol): Props = Props(new IMAPSessions(protocol))
@@ -24,9 +23,9 @@ object IMAPSessions {
 
   case class Disconnected(cause: Throwable)
 
-  case class Disconnect(userId:String )extends ImapCommand
+  case class Disconnect(userId:String )extends Command
 
-  case class Connect(userId: String) extends ImapCommand
+  case class Connect(userId: String) extends Command
 
 }
 
@@ -34,7 +33,7 @@ class IMAPSessions(protocol: ImapProtocol) extends BaseActor {
   val imapClient = new IMAPClient(4)
 
   override def receive: Receive = {
-    case cmd: ImapCommand =>
+    case cmd: Command =>
       sessionFor(cmd.userId).forward(cmd)
   }
 
@@ -112,11 +111,11 @@ private class IMAPSession(client: IMAPClient, protocol: ImapProtocol) extends Ba
   }
 
   def connected: Receive = {
-    case cmd@Login(_, _, _) =>
+    case cmd@Command.Login(_, _, _) =>
       val tag = f"A$tagCounter%06d"
       val handler = context.actorOf(LoginHandler.props(session, tag), "login")
       handler forward cmd
-    case cmd@Select(_, _) =>
+    case cmd@Command.Select(_, _) =>
       val tag = f"A$tagCounter%06d"
       val handler = context.actorOf(SelectHandler.props(session, tag), "select")
       handler forward cmd
