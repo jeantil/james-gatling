@@ -6,9 +6,12 @@ import com.sun.mail.imap.protocol.IMAPResponse
 
 case class ImapResponses(responses: Seq[IMAPResponse]) {
   import ImapResponses._
+
   def mkString(separator: String = ",") = {
     responses.mkString(separator)
   }
+
+  def isBad = responses.lastOption.exists(_.isBAD)
 
   def isOk = responses.lastOption.exists(_.isOK)
 

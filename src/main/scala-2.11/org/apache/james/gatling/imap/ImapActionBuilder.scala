@@ -15,7 +15,7 @@ import org.apache.james.gatling.imap.protocol.{ImapComponents, ImapProtocol}
 
 class ImapActionBuilder(requestName: String) {
   def login(user: Expression[String], password: Expression[String]): ImapLoginActionBuilder = {
-    ImapLoginActionBuilder(requestName, user, password)
+    ImapLoginActionBuilder(requestName, user, password, Seq.empty)
   }
 
   def select(mailbox: Expression[String]): ImapSelectActionBuilder = {
@@ -42,9 +42,11 @@ abstract class ImapCommandActionBuilder extends ActionBuilder with NameGen {
 
 }
 
-case class ImapLoginActionBuilder(requestName: String, username: Expression[String], password: Expression[String]) extends ImapCommandActionBuilder {
+case class ImapLoginActionBuilder(requestName: String, username: Expression[String], password: Expression[String], private val checks: Seq[ImapCheck]) extends ImapCommandActionBuilder {
+  def check(checks: ImapCheck*) = copy(checks = this.checks ++ checks)
+
   override def props(statsEngine: StatsEngine, next: Action, components: ImapComponents) =
-    LoginAction.props(components.protocol, components.sessions, requestName, statsEngine, next, username, password)
+    LoginAction.props(components.protocol, components.sessions, requestName, statsEngine, next, checks, username, password)
 
   override val actionName = "login-action"
 }
