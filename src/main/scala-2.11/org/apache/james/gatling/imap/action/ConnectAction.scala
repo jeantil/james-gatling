@@ -1,20 +1,19 @@
 package org.apache.james.gatling.imap.action
 
-import akka.actor.{Actor, ActorRef, Props}
+import akka.actor.{Actor, Props}
 import io.gatling.commons.stats.{KO, OK}
 import io.gatling.commons.util.TimeHelper._
-import io.gatling.core.action.{Action, ActionActor}
+import io.gatling.core.action.ActionActor
 import io.gatling.core.session.Session
-import io.gatling.core.stats.StatsEngine
 import io.gatling.core.stats.message.ResponseTimings
-import org.apache.james.gatling.imap.protocol.{Command, ImapProtocol, Response}
+import org.apache.james.gatling.imap.protocol.{Command, Response}
 
 object ConnectAction {
-  def props(protocol: ImapProtocol, sessions: ActorRef, requestName: String, statsEngine: StatsEngine, next: Action): Props =
-    Props(new ConnectAction(protocol, sessions, requestName, statsEngine, next))
+  def props(imapContext:ImapActionContext, requestName: String): Props =
+    Props(new ConnectAction(imapContext,requestName))
 }
 
-class ConnectAction(protocol: ImapProtocol, sessions: ActorRef, requestName: String, val statsEngine: StatsEngine, val next: Action) extends ActionActor {
+class ConnectAction(val imapContext:ImapActionContext, requestName: String) extends ActionActor with ImapActionActor{
   override def execute(session: Session): Unit = {
     sessions.tell(Command.Connect(session.userId.toString), handleConnected(session, nowMillis))
   }
@@ -23,21 +22,21 @@ class ConnectAction(protocol: ImapProtocol, sessions: ActorRef, requestName: Str
     context.actorOf(Props(new Actor {
       override def receive: Receive = {
         case Response.Connected(responses) =>
-          onOkResponse()
+          ok()
         case Response.Disconnected(cause) =>
           logger.warn("Connection failure", cause)
-          noOkResponse(Some(cause.getMessage))
+          ko(Some(cause.getMessage))
         case e: Exception =>
-          noOkResponse(Some(e.getMessage))
+          ko(Some(e.getMessage))
       }
 
-      def noOkResponse(message: Option[String] = None) = {
+      def ko(message: Option[String] = None) = {
         statsEngine.logResponse(session, requestName, ResponseTimings(start, nowMillis), KO, None, message)
         next ! session.markAsFailed
         context.stop(self)
       }
 
-      def onOkResponse() = {
+      def ok() = {
         statsEngine.logResponse(session, requestName, ResponseTimings(start, nowMillis), OK, None, None)
         next ! session
         context.stop(self)

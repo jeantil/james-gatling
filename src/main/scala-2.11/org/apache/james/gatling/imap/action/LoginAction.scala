@@ -2,25 +2,23 @@ package org.apache.james.gatling.imap.action
 
 import scala.collection.immutable.Seq
 
-import akka.actor.{Actor, ActorRef, Props}
+import akka.actor.{Actor, Props}
 import io.gatling.commons.stats.{KO, OK}
 import io.gatling.commons.util.TimeHelper._
 import io.gatling.commons.validation.{Failure, Validation}
-import io.gatling.core.action.{Action, ValidatedActionActor}
+import io.gatling.core.action.ValidatedActionActor
 import io.gatling.core.check.Check
 import io.gatling.core.session._
-import io.gatling.core.stats.StatsEngine
 import io.gatling.core.stats.message.ResponseTimings
 import org.apache.james.gatling.imap.check.ImapCheck
-import org.apache.james.gatling.imap.protocol.{Command, ImapProtocol, Response}
+import org.apache.james.gatling.imap.protocol.{Command, Response}
 
 object LoginAction {
-  def props(protocol: ImapProtocol, sessions: ActorRef, requestname: String, statsEngine: StatsEngine, next: Action,
-            checks: Seq[ImapCheck], username: Expression[String], password: Expression[String]) =
-    Props(new LoginAction(protocol, sessions, requestname, statsEngine, next, checks, username, password))
+  def props(imapContext:ImapActionContext,requestname: String, checks: Seq[ImapCheck], username: Expression[String], password: Expression[String]) =
+    Props(new LoginAction(imapContext,requestname, checks, username, password))
 }
 
-class LoginAction(protocol: ImapProtocol, sessions: ActorRef, requestName: String, val statsEngine: StatsEngine, val next: Action, checks: Seq[ImapCheck], username: Expression[String], password: Expression[String]) extends ValidatedActionActor {
+class LoginAction(val imapContext:ImapActionContext,requestName: String, checks: Seq[ImapCheck], username: Expression[String], password: Expression[String]) extends ValidatedActionActor with ImapActionActor{
 
   def handleLoggedIn(session: Session, start: Long) =
     context.actorOf(Props(new Actor {
