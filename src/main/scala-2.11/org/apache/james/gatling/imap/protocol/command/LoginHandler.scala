@@ -9,18 +9,18 @@ import com.lafaspot.imapnio.client.IMAPSession
 import com.lafaspot.imapnio.listener.IMAPCommandListener
 import com.sun.mail.imap.protocol.IMAPResponse
 import io.gatling.core.akka.BaseActor
-import org.apache.james.gatling.imap.protocol.{Command, ImapResponses, Response}
+import org.apache.james.gatling.imap.protocol.{Command, ImapResponses, Response, Tag}
 
-object LoginHandler{
-  def props(session:IMAPSession,tag:String)=Props(new LoginHandler(session, tag))
+object LoginHandler {
+  def props(session: IMAPSession, tag: Tag) = Props(new LoginHandler(session, tag))
 }
 
-class LoginHandler(session:IMAPSession,tag:String) extends BaseActor {
+class LoginHandler(session: IMAPSession, tag: Tag) extends BaseActor {
 
   override def receive: Receive = {
     case Command.Login(userId, user, password) =>
       val listener = new LoginListener(userId)
-      session.executeLoginCommand(tag, user, password, listener)
+      session.executeLoginCommand(tag.string, user, password, listener)
       context.become(waitForLoggedIn(sender()))
   }
 
@@ -30,8 +30,10 @@ class LoginHandler(session:IMAPSession,tag:String) extends BaseActor {
       context.stop(self)
   }
 
-  class LoginListener(userId:String) extends IMAPCommandListener{
+  class LoginListener(userId: String) extends IMAPCommandListener {
+
     import collection.JavaConverters._
+
     override def onMessage(session: IMAPSession, response: IMAPResponse): Unit = {
       logger.trace(s"Untagged message for $userId : ${response.toString}")
     }
@@ -42,5 +44,6 @@ class LoginHandler(session:IMAPSession,tag:String) extends BaseActor {
       self ! Response.LoggedIn(response)
     }
   }
+
 }
 

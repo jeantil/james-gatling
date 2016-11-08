@@ -2,6 +2,7 @@ package org.apache.james.gatling.imap.protocol
 
 import java.net.URI
 import java.util
+import java.util.Properties
 
 import scala.util.control.NoStackTrace
 
@@ -70,10 +71,10 @@ private class ImapSession(client: IMAPClient, protocol: ImapProtocol) extends Ba
       logger.trace("Callback onResponse called")
   }
   val uri = new URI(s"imap://${protocol.host}:${protocol.port}")
-  val config = protocol.config
+  val config: Properties = protocol.config
   logger.debug(s"connecting to $uri with $config")
-  val session = client.createSession(uri, config, connectionListener, new LogManager(Logger.Level.FATAL, LogPage.DEFAULT_SIZE))
-  var tagCounter: Int = 1
+  val session: ClientSession = client.createSession(uri, config, connectionListener, new LogManager(Logger.Level.FATAL, LogPage.DEFAULT_SIZE))
+  private var currentTag: Tag= Tag.initial
 
   override def receive: Receive = disconnected
 
@@ -86,7 +87,7 @@ private class ImapSession(client: IMAPClient, protocol: ImapProtocol) extends Ba
     case Command.Disconnect(_) => ()
     case msg =>
       logger.error(s"disconnected - unexpected message from ${sender.path} " + msg)
-      if(sender.path != self.path)
+      if (sender.path != self.path)
         sender ! ImapStateError(s"session for ${self.path.name} is not connected")
   }
 
@@ -107,19 +108,23 @@ private class ImapSession(client: IMAPClient, protocol: ImapProtocol) extends Ba
 
   def connected: Receive = {
     case cmd@Command.Login(_, _, _) =>
-      val tag = f"A$tagCounter%06d"
-      val handler = context.actorOf(LoginHandler.props(session, tag), "login")
+      val handler = context.actorOf(LoginHandler.props(session, nextTag()), "login")
       handler forward cmd
     case cmd@Command.Select(_, _) =>
-      val tag = f"A$tagCounter%06d"
-      val handler = context.actorOf(SelectHandler.props(session, tag), "select")
+      val handler = context.actorOf(SelectHandler.props(session, nextTag()), "select")
       handler forward cmd
     case msg@Response.Disconnected(cause) =>
       context.become(disconnected)
-    case msg@Command.Disconnect(userId)=>
+    case msg@Command.Disconnect(userId) =>
       session.disconnect()
       context.become(disconnecting(sender()))
 
+  }
+
+  private def nextTag() = {
+    val tag = currentTag
+    currentTag=tag.next
+    tag
   }
 
   def disconnecting(receiver: ActorRef): Receive = {
@@ -132,5 +137,6 @@ private class ImapSession(client: IMAPClient, protocol: ImapProtocol) extends Ba
       stash
   }
 }
-case class ImapStateError(msg:String)extends IllegalStateException(msg) with NoStackTrace
+
+case class ImapStateError(msg: String) extends IllegalStateException(msg) with NoStackTrace
 

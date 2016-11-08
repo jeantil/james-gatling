@@ -13,7 +13,7 @@ import com.lafaspot.imapnio.listener.IMAPConnectionListener
 import com.lafaspot.logfast.logging.internal.LogPage
 import com.lafaspot.logfast.logging.{LogManager, Logger}
 import com.sun.mail.imap.protocol.IMAPResponse
-import org.apache.james.gatling.imap.protocol.{Command, Response}
+import org.apache.james.gatling.imap.protocol.{Command, Response, Tag}
 import org.scalatest.matchers.{MatchResult, Matcher}
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpec}
 import org.slf4j.LoggerFactory
@@ -24,7 +24,7 @@ class LoginHandlerSpec extends WordSpec with BeforeAndAfterAll with Matchers {
   implicit lazy val system = ActorSystem("LoginHandlerSpec")
   "Login handler" should {
     "send the response back when logged in" in {
-      val tag = "A0001"
+      val tag = Tag.initial
       val probe = TestProbe()
       withConnectedSession { session =>
         val handler = system.actorOf(LoginHandler.props(session, tag))
