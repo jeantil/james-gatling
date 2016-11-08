@@ -1,7 +1,8 @@
 package org.apache.james.gatling.imap
 
+import org.apache.james.gatling.imap.action.ImapActionBuilder
 import org.apache.james.gatling.imap.check.ImapCheckSupport
-import org.apache.james.gatling.imap.protocol.ImapProtocol
+import org.apache.james.gatling.imap.protocol.{ImapProtocol, ImapProtocolBuilder}
 
 object PreDef extends ImapCheckSupport {
 

@@ -1,6 +1,4 @@
-package org.apache.james.gatling.imap
-
-import org.apache.james.gatling.imap.protocol.ImapProtocol
+package org.apache.james.gatling.imap.protocol
 
 object ImapProtocolBuilder {
   val default = new ImapProtocolBuilder("localhost", 143)

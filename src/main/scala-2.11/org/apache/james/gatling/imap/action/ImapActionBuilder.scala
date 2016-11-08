@@ -1,4 +1,4 @@
-package org.apache.james.gatling.imap
+package org.apache.james.gatling.imap.action
 
 import scala.collection.immutable.Seq
 
@@ -8,7 +8,6 @@ import io.gatling.core.action.{Action, ExitableActorDelegatingAction}
 import io.gatling.core.session.Expression
 import io.gatling.core.structure.ScenarioContext
 import io.gatling.core.util.NameGen
-import org.apache.james.gatling.imap.action.{ConnectAction, ImapActionContext, LoginAction, SelectAction}
 import org.apache.james.gatling.imap.check.ImapCheck
 import org.apache.james.gatling.imap.protocol.{ImapComponents, ImapProtocol}
 
