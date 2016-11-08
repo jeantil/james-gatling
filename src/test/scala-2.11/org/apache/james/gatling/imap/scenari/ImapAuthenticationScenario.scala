@@ -15,7 +15,7 @@ class ImapAuthenticationScenario extends Simulation {
   val scn = scenario("ImapAuthentication").feed(feeder)
     .exec(imap("Connect").connect()).exitHereIfFailed
     .exec(imap("login").login("${username}","${password}"))
-    .exec(imap("select").select("INBOX").check(ok))
+    .exec(imap("select").select("INBOX").check(ok, hasNoRecent))
 
   setUp(scn.inject(constantUsersPerSec(1).during(2.seconds))).protocols(imap.host("10.69.0.110"))
 }
