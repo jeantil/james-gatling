@@ -44,6 +44,12 @@ class IMAPSessions(protocol: ImapProtocol) extends BaseActor {
   protected def createIMAPSession(userId: String) = {
     context.actorOf(IMAPSession.props(imapClient, protocol), userId)
   }
+
+  @scala.throws[Exception](classOf[Exception])
+  override def postStop(): Unit = {
+    super.postStop()
+    imapClient.shutdown()
+  }
 }
 
 private object IMAPSession {
