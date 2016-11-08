@@ -7,8 +7,7 @@ import io.gatling.core.action.{Action, ActionActor}
 import io.gatling.core.session.Session
 import io.gatling.core.stats.StatsEngine
 import io.gatling.core.stats.message.ResponseTimings
-import org.apache.james.gatling.imap.protocol.IMAPSessions.{Connect, Connected, Disconnected}
-import org.apache.james.gatling.imap.protocol.ImapProtocol
+import org.apache.james.gatling.imap.protocol.{Command, ImapProtocol, Response}
 
 object ConnectAction {
   def props(protocol: ImapProtocol, sessions: ActorRef, requestName: String, statsEngine: StatsEngine, next: Action): Props =
@@ -17,15 +16,15 @@ object ConnectAction {
 
 class ConnectAction(protocol: ImapProtocol, sessions: ActorRef, requestName: String, val statsEngine: StatsEngine, val next: Action) extends ActionActor {
   override def execute(session: Session): Unit = {
-    sessions.tell(Connect(session.userId.toString), handleConnected(session, nowMillis))
+    sessions.tell(Command.Connect(session.userId.toString), handleConnected(session, nowMillis))
   }
 
   def handleConnected(session: Session, start: Long) =
     context.actorOf(Props(new Actor {
       override def receive: Receive = {
-        case Connected(responses) =>
+        case Response.Connected(responses) =>
           onOkResponse()
-        case Disconnected(cause) =>
+        case Response.Disconnected(cause) =>
           logger.warn("Connection failure", cause)
           noOkResponse(Some(cause.getMessage))
         case e: Exception =>

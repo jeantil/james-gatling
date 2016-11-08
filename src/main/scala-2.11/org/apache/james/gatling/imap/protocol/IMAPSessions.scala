@@ -2,6 +2,7 @@ package org.apache.james.gatling.imap.protocol
 
 import java.net.URI
 import java.util
+import javax.xml.ws.ResponseWrapper
 
 import scala.collection.immutable.Seq
 import scala.util.control.NoStackTrace
@@ -13,20 +14,10 @@ import com.lafaspot.logfast.logging.internal.LogPage
 import com.lafaspot.logfast.logging.{LogManager, Logger}
 import com.sun.mail.imap.protocol.IMAPResponse
 import io.gatling.core.akka.BaseActor
-import org.apache.james.gatling.imap.protocol.IMAPSessions.{Disconnect, Disconnected}
 import org.apache.james.gatling.imap.protocol.command.{LoginHandler, SelectHandler}
 
 object IMAPSessions {
   def props(protocol: ImapProtocol): Props = Props(new IMAPSessions(protocol))
-
-  case class Connected(responses: Seq[IMAPResponse])
-
-  case class Disconnected(cause: Throwable)
-
-  case class Disconnect(userId:String )extends Command
-
-  case class Connect(userId: String) extends Command
-
 }
 
 class IMAPSessions(protocol: ImapProtocol) extends BaseActor {
@@ -62,7 +53,7 @@ private class IMAPSession(client: IMAPClient, protocol: ImapProtocol) extends Ba
   val connectionListener = new IMAPConnectionListener {
     override def onConnect(session: ClientSession): Unit = {
       logger.trace("Callback onConnect called")
-      self ! IMAPSessions.Connected(Seq.empty[IMAPResponse])
+      self ! Response.Connected(Seq.empty[IMAPResponse])
     }
 
     override def onMessage(session: ClientSession, response: IMAPResponse): Unit =
@@ -71,7 +62,7 @@ private class IMAPSession(client: IMAPClient, protocol: ImapProtocol) extends Ba
 
     override def onDisconnect(session: ClientSession, cause: Throwable): Unit = {
       logger.trace("Callback onDisconnect called")
-      self ! IMAPSessions.Disconnected(cause)
+      self ! Response.Disconnected(cause)
     }
 
     override def onInactivityTimeout(session: ClientSession): Unit =
@@ -89,12 +80,12 @@ private class IMAPSession(client: IMAPClient, protocol: ImapProtocol) extends Ba
   override def receive: Receive = disconnected
 
   def disconnected: Receive = {
-    case IMAPSessions.Connect(userId) =>
+    case Command.Connect(userId) =>
       logger.debug(s"got connect request, $userId connecting to $uri")
       session.connect()
       context.become(connecting(sender()))
-    case IMAPSessions.Disconnected(_) => ()
-    case IMAPSessions.Disconnect(_) => ()
+    case Response.Disconnected(_) => ()
+    case Command.Disconnect(_) => ()
     case msg =>
       logger.error(s"disconnected - unexpected message from ${sender.path} " + msg)
       if(sender.path != self.path)
@@ -102,12 +93,12 @@ private class IMAPSession(client: IMAPClient, protocol: ImapProtocol) extends Ba
   }
 
   def connecting(receiver: ActorRef): Receive = {
-    case msg@IMAPSessions.Connected(responses) =>
+    case msg@Response.Connected(responses) =>
       logger.debug("got connected response")
       context.become(connected)
       receiver ! msg
       unstashAll()
-    case msg@Disconnected(cause) =>
+    case msg@Response.Disconnected(cause) =>
       context.become(disconnected)
       receiver ! msg
       unstashAll()
@@ -125,16 +116,16 @@ private class IMAPSession(client: IMAPClient, protocol: ImapProtocol) extends Ba
       val tag = f"A$tagCounter%06d"
       val handler = context.actorOf(SelectHandler.props(session, tag), "select")
       handler forward cmd
-    case msg@Disconnected(cause) =>
+    case msg@Response.Disconnected(cause) =>
       context.become(disconnected)
-    case msg@Disconnect(userId)=>
+    case msg@Command.Disconnect(userId)=>
       session.disconnect()
       context.become(disconnecting(sender()))
 
   }
 
   def disconnecting(receiver: ActorRef): Receive = {
-    case msg@IMAPSessions.Disconnected(cause) =>
+    case msg@Response.Disconnected(cause) =>
       receiver ! msg
       context.become(disconnected)
       unstashAll()
